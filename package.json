@@ -10,14 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "5.x",
     "antd": "^5.24.7",
     "konva": "^9.3.20",
+    "lucide-react": "^0.488.0",
     "react": "^18",
     "react-dom": "^18",
     "react-konva": "^18",
     "react-konva-utils": "latest",
     "react-scripts": "^5.0.0",
-    "use-image": "latest"
+    "use-image": "^1.1.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",

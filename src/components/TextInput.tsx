@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 Konva._fixTextRendering = true;
 
-const TextInput = ({ x, y }) => {
+const TextInput = ({ x, y, id, isExporting }) => {
   const [text, setText] = useState('New Text');
   const [initialX, setInitialX] = useState(x)
   const [initialY, setInitialY] = useState(y)
@@ -42,6 +42,7 @@ const TextInput = ({ x, y }) => {
   return (
     <>
       <Text
+        id={id}
         ref={textRef}
         text={text}
         x={initialX}
@@ -61,9 +62,10 @@ const TextInput = ({ x, y }) => {
           onClose={() => setIsEditing(false)}
         />
       )}
-      {!isEditing && (
+      {!isEditing && !isExporting && (
         <Transformer
           ref={trRef}
+
           enabledAnchors={['middle-left', 'middle-right']}
           boundBoxFunc={(oldBox, newBox) => ({
             ...newBox,
@@ -154,7 +156,6 @@ const TextEditor = ({ textNode, onClose, onChange }) => {
       window.addEventListener('click', handleOutsideClick);
     });
 
-    console.log('xxx')
     return () => {
       textarea.removeEventListener('keydown', handleKeyDown);
       textarea.removeEventListener('input', handleInput);
