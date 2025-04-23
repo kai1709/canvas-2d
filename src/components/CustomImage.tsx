@@ -65,7 +65,7 @@ const CustomImage = ({ src, x, y, onRemove, id, isExporting }: ImageProps) => {
   const [image] = useImage(src)
   const [position, setPosition] = useState('center-middle');
   const imageRef = useRef(null)
-  const [size, setSize] = useState({ width: 300, height: 100 });
+  const [size, setSize] = useState({ width: 900, height: 600 });
   const trRef = useRef(null);
   const handleTransform = () => {
     const node = imageRef.current;
