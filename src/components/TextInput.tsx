@@ -65,7 +65,6 @@ const TextInput = ({ x, y, id, isExporting }) => {
       {!isEditing && !isExporting && (
         <Transformer
           ref={trRef}
-
           enabledAnchors={['middle-left', 'middle-right']}
           boundBoxFunc={(oldBox, newBox) => ({
             ...newBox,
