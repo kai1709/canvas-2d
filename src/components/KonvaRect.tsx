@@ -63,16 +63,35 @@ function getCrop(image, size, clipPosition = 'center-middle') {
 
 const KonvaRect = ({ x, y, id, fill }: ShapeProps) => {
   const imageRef = useRef(null)
+  const trRef = useRef(null);
+  const [size, setSize] = useState({ width: 100, height: 50 });
+  const handleTransform = () => {
+    const node = imageRef.current;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    node.scaleX(1);
+    node.scaleY(1);
+    setSize({
+      width: Math.max(5, node.width() * scaleX),
+      height: Math.max(5, node.height() * scaleY),
+    });
+  };
 
+  useEffect(() => {
+    if (imageRef.current && trRef.current) {
+      trRef.current.nodes([imageRef.current]);
+    }
+  }, [])
   return (
     <>
       <Rect
         ref={imageRef}
         x={x}
         y={y}
-        width={100}
-        height={50}
+        width={size.width}
+        height={size.height}
         draggable
+        onTransform={handleTransform}
         fill={fill}
         stroke="black"
         strokeWidth={4}
@@ -83,6 +102,15 @@ const KonvaRect = ({ x, y, id, fill }: ShapeProps) => {
         onMouseLeave={() => {
 
           document.body.style.cursor = 'default';
+        }}
+      />
+      <Transformer
+        ref={trRef}
+        boundBoxFunc={(oldBox, newBox) => {
+          if (Math.abs(newBox.width) < 10 || Math.abs(newBox.height) < 10) {
+            return oldBox;
+          }
+          return newBox;
         }}
       />
     </>

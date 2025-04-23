@@ -4,7 +4,7 @@ import Konva from 'konva';
 import { Stage, Layer, Line } from 'react-konva';
 import TextInput from './components/TextInput';
 import { useEffect, useRef, useState } from 'react';
-import { Button, Card, Upload, UploadProps } from 'antd';
+import { Button, Card, Col, InputNumber, Radio, Row, Slider, Upload, UploadProps } from 'antd';
 import CustomImage from './components/CustomImage';
 import { v4 as uuidv4 } from 'uuid';
 import { ArrowRightOutlined } from '@ant-design/icons';
@@ -31,6 +31,10 @@ export type ImageProps = {
   src: string
   id: string
   onRemove?: (id: string) => void
+  filter?: string,
+  brightness: number,
+  contrast: number
+  blur: number
 }
 
 export type ShapeProps = {
@@ -47,7 +51,11 @@ function App() {
       x: 100 + Math.random() * 10 * 8,
       y: 200 + Math.random() * 10 * 8,
       src: DEFAULT_IMAGES[0],
-      id: `image_${uuidv4()}`
+      id: `image_${uuidv4()}`,
+      filter: '',
+      brightness: 0.1,
+      contrast: 12,
+      blur: 0
     }
   ])
   const [fileList, setFileList] = useState([])
@@ -62,7 +70,8 @@ function App() {
     newInputs.push({
       x: 50 + Math.random() * 10 * 8,
       y: 80 + Math.random() * 10 * 8,
-      id: `text_${uuidv4()}`
+      id: `text_${uuidv4()}`,
+
     })
     setInputs(newInputs)
   }
@@ -123,13 +132,19 @@ function App() {
     beforeUpload: (file) => {
       const reader = new FileReader()
       reader.onloadend = function () {
+        const id = `image_${uuidv4()}`
         // @ts-ignore
         setImages([...images, {
           x: 100 + Math.random() * 10 * 8,
           y: 200 + Math.random() * 10 * 8,
           src: reader.result?.toString(),
-          id: `image_${uuidv4()}`
+          id,
+          filter: '',
+          brightness: 0.1,
+          contrast: 12,
+          blur: 0
         }])
+        setSelectedImage(id)
       }
       reader.readAsDataURL(file);
       return false;
@@ -155,18 +170,18 @@ function App() {
 
 
     setShowMenu(false)
+    setSelectedImage(null)
   }
 
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [showMenu, setShowMenu] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-
+  const [selectedImage, setSelectedImage] = useState(null)
   const handleContextMenu = (e) => {
     e.evt.preventDefault();
     if (e.target === e.target.getStage()) {
       return;
     }
-
     const stage = e.target.getStage();
     const containerRect = stage.container().getBoundingClientRect();
     const pointerPosition = stage.getPointerPosition();
@@ -179,6 +194,8 @@ function App() {
     setSelectedId(e.target.attrs.id);
     e.cancelBubble = true;
   };
+
+  console.log({ selectedId })
 
   const onFillColor = (id: string, color: string) => {
     const newArrows = arrows.map(arrow => arrow.id === id ? ({ ...arrow, fill: color }) : arrow)
@@ -194,6 +211,29 @@ function App() {
   }
 
 
+  const onChangeBrightness = (value: number) => {
+    const newImages = images.map(i => ({
+      ...i,
+      brightness: selectedImage === i.id ? value : i.brightness
+    }))
+    setImages(newImages)
+  }
+
+  const onChangeConstrast = (value: number) => {
+    const newImages = images.map(i => ({
+      ...i,
+      contrast: selectedImage === i.id ? value : i.contrast
+    }))
+    setImages(newImages)
+  }
+
+  const onChangeBlur = (value: number) => {
+    const newImages = images.map(i => ({
+      ...i,
+      blur: selectedImage === i.id ? value : i.blur
+    }))
+    setImages(newImages)
+  }
   const [tool, setTool] = useState('pen');
   const [lines, setLines] = useState([]);
   const isDrawing = useRef(false);
@@ -275,8 +315,16 @@ function App() {
     }
   }, [isExporting])
 
+  console.log({ selectedImage })
 
-  console.log({ isExporting })
+  const image = images.find(a => a.id === selectedImage)
+  const onChangeFilter = (filter: string) => {
+    const newImages = images.map(i => ({
+      ...i,
+      filter: i.id === selectedImage ? filter : i.filter
+    }))
+    setImages(newImages)
+  }
   return (
     <>
       <div className='flex'>
@@ -347,7 +395,102 @@ function App() {
               </div>
             </div>
           </Card>
-          <Button type='primary' style={{ width: '100%', marginBottom: 20 }} onClick={() => setIsExporing(true)}>Export to PDF</Button>
+          <Button type='primary' style={{ width: '100%', marginBottom: 20, marginTop: 10 }} onClick={() => setIsExporing(true)}>Export to PDF</Button>
+
+          <div style={{ borderBottomWidth: 1, borderColor: 'gray', borderStyle: 'dashed', marginBottom: 20 }} />
+          {selectedImage && (
+            <div style={{ fontFamily: 'Arial', paddingLeft: 12, paddingRight: 12 }}>
+              <div style={{ marginTop: 20, marginBottom: 8, fontWeight: 600 }}>
+                Effects
+              </div>
+              <div style={{ display: 'flex' }}>
+                <div>
+                  <Radio checked={image?.filter === 'gray'} onClick={() => onChangeFilter('gray')}>Gray</Radio>
+                </div>
+                <div>
+                  <Radio checked={image?.filter === 'sepia'} onClick={() => onChangeFilter('sepia')}>Sepia</Radio>
+                </div>
+
+              </div>
+              <div style={{ display: 'flex', marginTop: 20 }}>
+                <div>
+                  <Radio checked={image?.filter === 'solarize'} onClick={() => onChangeFilter('solarize')}>Solarize</Radio>
+                </div>
+                <div>
+                  <Radio checked={image?.filter === ''} onClick={() => onChangeFilter('')}>None</Radio>
+                </div>
+              </div>
+              <div style={{ marginTop: 20, fontWeight: 600 }}>
+                Brightness
+              </div>
+              <Row>
+                <Col span={12}>
+                  <Slider
+                    min={0}
+                    max={1}
+                    onChange={onChangeBrightness}
+                    value={image?.brightness || 0}
+                    step={0.1}
+                  />
+                </Col>
+                <Col span={4}>
+                  <InputNumber
+                    min={0}
+                    max={1}
+                    style={{ margin: '0 16px' }}
+                    value={image?.brightness || 0}
+                    onChange={onChangeBrightness}
+                  />
+                </Col>
+              </Row>
+              <div style={{ marginTop: 20, fontWeight: 600 }}>
+                Constrast
+              </div>
+              <Row>
+                <Col span={12}>
+                  <Slider
+                    min={1}
+                    max={100}
+                    onChange={onChangeConstrast}
+                    value={image?.contrast || 0}
+                    step={1}
+                  />
+                </Col>
+                <Col span={4}>
+                  <InputNumber
+                    min={1}
+                    max={100}
+                    style={{ margin: '0 16px' }}
+                    value={image?.contrast || 0}
+                    onChange={onChangeConstrast}
+                  />
+                </Col>
+              </Row>
+              <div style={{ marginTop: 20, fontWeight: 600 }}>
+                Blur
+              </div>
+              <Row>
+                <Col span={12}>
+                  <Slider
+                    min={0}
+                    max={40}
+                    onChange={onChangeBlur}
+                    value={image?.blur || 0}
+                    step={0}
+                  />
+                </Col>
+                <Col span={4}>
+                  <InputNumber
+                    min={0}
+                    max={40}
+                    style={{ margin: '0 16px' }}
+                    value={image?.blur || 0}
+                    onChange={onChangeBlur}
+                  />
+                </Col>
+              </Row>
+            </div>
+          )}
         </div>
         <div className='canvas-playground'>
           <Stage ref={stageRef} width={window.innerWidth - 300} height={window.innerHeight} onContextMenu={handleContextMenu}
@@ -363,7 +506,7 @@ function App() {
               ))}
 
               {images.map((image) => (
-                <CustomImage key={image.id} src={image.src} x={image.x} y={image.y} onRemove={onRemove} id={image.id} isExporting={isExporting} />
+                <CustomImage key={image.id} selectedImage={selectedImage} onSelectImage={() => setSelectedImage(image.id)} src={image.src} x={image.x} y={image.y} onRemove={onRemove} filter={image.filter} id={image.id} isExporting={isExporting} {...image} />
               ))}
 
               {arrows.map((arrow) => (
@@ -398,6 +541,7 @@ function App() {
               ))}
             </Layer>
           </Stage>
+
           {showMenu && (
             <div
               style={{
@@ -412,6 +556,26 @@ function App() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* {selectedId && selectedId.includes('image') && (
+                <button
+                  style={{
+                    width: '100%',
+                    backgroundColor: 'white',
+                    border: 'none',
+                    margin: 0,
+                    padding: '10px',
+                    cursor: 'pointer'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = 'lightgray'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = 'white'}
+                  onClick={() => {
+                    setSelectedImage(selectedId)
+                    setShowMenu(false)
+                  }}
+                >
+                  Select
+                </button>
+              )} */}
               <button
                 style={{
                   width: '100%',
@@ -427,7 +591,7 @@ function App() {
               >
                 Delete
               </button>
-              {selectedId!.includes('shape') && (
+              {selectedId && selectedId!.includes('shape') && (
                 <>
                   <button
                     style={{

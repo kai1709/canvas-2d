@@ -63,7 +63,26 @@ function getCrop(image, size, clipPosition = 'center-middle') {
 
 const KonvaStar = ({ x, y, id, fill }: ShapeProps) => {
   const imageRef = useRef(null)
+  const [size, setSize] = useState({ innerRadius: 30, outerRadius: 70 });
+  const trRef = useRef(null);
+  const handleTransform = () => {
+    const node = imageRef.current;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    console.log({ scaleX, scaleY })
+    node.scaleX(1);
+    node.scaleY(1);
+    setSize({
+      innerRadius: Math.max(5, node.innerRadius() * scaleX),
+      outerRadius: Math.max(5, node.outerRadius() * scaleY),
+    });
+  };
 
+  useEffect(() => {
+    if (imageRef.current && trRef.current) {
+      trRef.current.nodes([imageRef.current]);
+    }
+  }, []);
   return (
     <>
       <Star
@@ -71,9 +90,10 @@ const KonvaStar = ({ x, y, id, fill }: ShapeProps) => {
         x={x}
         y={y}
         numPoints={5}
-        innerRadius={30}
-        outerRadius={70}
+        innerRadius={size.innerRadius}
+        outerRadius={size.outerRadius}
         draggable
+        onTransform={handleTransform}
         fill={fill}
         stroke="black"
         strokeWidth={4}
@@ -84,6 +104,15 @@ const KonvaStar = ({ x, y, id, fill }: ShapeProps) => {
         onMouseLeave={() => {
 
           document.body.style.cursor = 'default';
+        }}
+      />
+      <Transformer
+        ref={trRef}
+        boundBoxFunc={(oldBox, newBox) => {
+          if (Math.abs(newBox.width) < 10 || Math.abs(newBox.height) < 10) {
+            return oldBox;
+          }
+          return newBox;
         }}
       />
     </>

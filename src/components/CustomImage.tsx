@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Transformer } from 'react-konva';
 import useImage from 'use-image';
 import { ImageProps } from '../App';
+import Konva from 'konva';
 
 function getCrop(image, size, clipPosition = 'center-middle') {
   const width = size.width;
@@ -61,8 +62,8 @@ function getCrop(image, size, clipPosition = 'center-middle') {
 }
 
 
-const CustomImage = ({ src, x, y, onRemove, id, isExporting }: ImageProps) => {
-  const [image] = useImage(src)
+const CustomImage = ({ src, x, y, onRemove, id, isExporting, onSelectImage, filter, brightness, contrast, blur, selectedImage }: ImageProps) => {
+  const [image] = useImage(src, 'anonymous')
   const [position, setPosition] = useState('center-middle');
   const imageRef = useRef(null)
   const [size, setSize] = useState({ width: 900, height: 600 });
@@ -74,6 +75,13 @@ const CustomImage = ({ src, x, y, onRemove, id, isExporting }: ImageProps) => {
 
     node.scaleX(1);
     node.scaleY(1);
+    imageRef.current.cache({
+      width: Math.max(5, node.width() * scaleX),
+      height: Math.max(5, node.height() * scaleY),
+      strokeWidth: 10,
+      stroke: 'blue',
+      strokeEnabled: true
+    })
     setSize({
       width: Math.max(5, node.width() * scaleX),
       height: Math.max(5, node.height() * scaleY),
@@ -87,10 +95,26 @@ const CustomImage = ({ src, x, y, onRemove, id, isExporting }: ImageProps) => {
 
   useEffect(() => {
     if (image && imageRef.current && trRef.current) {
+
       trRef.current.nodes([imageRef.current]);
+      imageRef.current.cache();
     }
   }, [image]);
 
+  useEffect(() => {
+    imageRef.current.cache({
+      strokeEnabled: selectedImage === id
+    })
+  }, [selectedImage])
+  const filters = [Konva.Filters.Contrast, Konva.Filters.Brighten, Konva.Filters.Blur]
+  if (filter === 'gray') {
+    filters.push(Konva.Filters.RGB)
+  } else if (filter === 'sepia') {
+    filters.push(Konva.Filters.Sepia)
+  } else if (filter === 'solarize') {
+    filters.push(Konva.Filters.Solarize)
+  }
+  console.log({ is: selectedImage === id, selectedImage, id })
   return (
     <>
       <Image
@@ -103,6 +127,8 @@ const CustomImage = ({ src, x, y, onRemove, id, isExporting }: ImageProps) => {
         draggable
         {...crop}
         id={id}
+        onClick={() => onSelectImage(id)}
+        filters={filters}
         onMouseEnter={() => {
           document.body.style.cursor = 'pointer';
         }}
@@ -115,6 +141,15 @@ const CustomImage = ({ src, x, y, onRemove, id, isExporting }: ImageProps) => {
           console.log("double tap")
           onRemove?.(id)
         }}
+        red={filter === 'gray' ? 255 : 120}
+        green={filter === 'gray' ? 255 : 120}
+        blue={filter === 'gray' ? 255 : 120}
+        brightness={brightness}
+        contrast={contrast}
+        blurRadius={blur}
+        strokeWidth={10}
+        stroke="blue"
+        strokeEnabled={selectedImage === id}
       />
       {!isExporting && (
         <Transformer

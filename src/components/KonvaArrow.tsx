@@ -63,18 +63,39 @@ function getCrop(image, size, clipPosition = 'center-middle') {
 
 const KonvaArrow = ({ x, y, id, fill }: ShapeProps) => {
   const imageRef = useRef(null)
+  const [size, setSize] = useState({ pointerLength: 20, pointerWidth: 20, points: [0, 0, 100, 100] });
+  const trRef = useRef(null);
+  const handleTransform = () => {
+    const node = imageRef.current;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    node.scaleX(1);
+    node.scaleY(1);
+    const currentPoints = node.points()
+    setSize({
+      pointerLength: Math.max(5, node.pointerLength() * scaleX),
+      pointerWidth: Math.max(5, node.pointerWidth() * scaleY),
+      points: [Math.max(5, currentPoints[0] * scaleX), Math.max(5, currentPoints[1] * scaleY), Math.max(5, currentPoints[2] * scaleX), Math.max(5, currentPoints[3] * scaleY)]
+    });
+  };
 
+  useEffect(() => {
+    if (imageRef.current && trRef.current) {
+      trRef.current.nodes([imageRef.current]);
+    }
+  }, []);
   return (
     <>
       <Arrow
         ref={imageRef}
         x={x}
         y={y}
-        points={[0, 0, 100, 100]}
-        pointerLength={20}
-        pointerWidth={20}
+        points={size.points}
+        pointerLength={size.pointerLength}
+        pointerWidth={size.pointerWidth}
         draggable
         fill={fill}
+        onTransform={handleTransform}
         stroke="black"
         strokeWidth={4}
         id={id}
@@ -84,6 +105,15 @@ const KonvaArrow = ({ x, y, id, fill }: ShapeProps) => {
         onMouseLeave={() => {
 
           document.body.style.cursor = 'default';
+        }}
+      />
+      <Transformer
+        ref={trRef}
+        boundBoxFunc={(oldBox, newBox) => {
+          if (Math.abs(newBox.width) < 10 || Math.abs(newBox.height) < 10) {
+            return oldBox;
+          }
+          return newBox;
         }}
       />
     </>
