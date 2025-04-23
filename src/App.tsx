@@ -16,6 +16,9 @@ import KonvaStar from './components/KonvaStar';
 
 Konva._fixTextRendering = true;
 
+const DEFAULT_IMAGES = [
+  'https://res.cloudinary.com/dnxcnqiwu/image/upload/v1739182022/18_zlclbw.png'
+]
 type TextProps = {
   x: number
   y: number
@@ -39,7 +42,14 @@ export type ShapeProps = {
 
 function App() {
   const [inputs, setInputs] = useState<TextProps[]>([])
-  const [images, setImages] = useState<ImageProps[]>([])
+  const [images, setImages] = useState<ImageProps[]>([
+    {
+      x: 100 + Math.random() * 10 * 8,
+      y: 200 + Math.random() * 10 * 8,
+      src: DEFAULT_IMAGES[0],
+      id: `image_${uuidv4()}`
+    }
+  ])
   const [fileList, setFileList] = useState([])
   const [arrows, setArrows] = useState<ShapeProps[]>([])
   const [circles, setCircles] = useState<ShapeProps[]>([])
@@ -266,7 +276,7 @@ function App() {
   }, [isExporting])
 
 
-  console.log({isExporting})
+  console.log({ isExporting })
   return (
     <>
       <div className='flex'>
